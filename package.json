@@ -1,0 +1,31 @@
+{
+  "name": "bitvolt-sc",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Bit-Volt/bitvolt-sc.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Bit-Volt/bitvolt-sc/issues"
+  },
+  "homepage": "https://github.com/Bit-Volt/bitvolt-sc#readme",
+  "dependencies": {
+    "dotenv": "^10.0.0",
+    "hardhat": "^2.6.7"
+  },
+  "devDependencies": {
+    "@nomiclabs/hardhat-ethers": "^2.0.2",
+    "@nomiclabs/hardhat-waffle": "^2.0.1",
+    "chai": "^4.3.4",
+    "ethereum-waffle": "^3.4.0",
+    "ethers": "^5.5.1"
+  }
+}
