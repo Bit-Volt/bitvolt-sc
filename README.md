@@ -13,3 +13,10 @@ npx hardhat node
 node scripts/sample-script.js
 npx hardhat help
 ```
+
+```
+AC_PRIV_KEY=
+AC_ADDRESS=
+API_KEY_ALCHEMY_KOVAN=
+API_BSCSCAN=
+```

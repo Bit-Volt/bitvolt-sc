@@ -1,0 +1,22 @@
+const hre = require("hardhat");
+
+CONSTRUCTOR_ARGS = {
+  testnet: {
+    TOKEN_NAME: "BitVolt",
+    TOKEN_SYMBOL: "BVT",
+    INITIAL_SUPPLY: 100 * 10 ** 6,
+    DECIMALS: 9,
+    PS_FACTORY_ADDRESS: 0x6725f303b657a9451d8ba641348b6761a6cc7a17,
+    PS_ROUTER_ADDRESS: 0xd99d1c33f9fc3444f8101754abc46c52416550d1,
+    MARKETING_WALLET_ADDRESS: 0x2d2d6a24d74b8019875b4b9f6197b40c9ffda28c,
+    INNOVATION_WALLET_ADDRESS: 0x3592029e150cbf023d9d42cf69829418ad8c6f9c,
+    LP_WALLET_ADDRESS: 0xfd1cab98aadf8923386da85b57831d2de3fa578d,
+  },
+};
+
+CONSTRUCTOR_ARGS_ORDER = ["TOKEN_NAME", "TOKEN_SYMBOL", "INITIAL_SUPPLY"];
+
+module.exports = ((network) => {
+  args = CONSTRUCTOR_ARGS[network];
+  return CONSTRUCTOR_ARGS_ORDER.map((key) => args[key]);
+})(hre.network.name);
