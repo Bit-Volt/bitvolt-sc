@@ -1,31 +1,40 @@
 {
-  "name": "bitvolt-sc",
-  "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/Bit-Volt/bitvolt-sc.git"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "bugs": {
-    "url": "https://github.com/Bit-Volt/bitvolt-sc/issues"
-  },
-  "homepage": "https://github.com/Bit-Volt/bitvolt-sc#readme",
-  "dependencies": {
-    "dotenv": "^10.0.0",
-    "hardhat": "^2.6.7"
-  },
+  "name": "hardhat-project",
   "devDependencies": {
-    "@nomiclabs/hardhat-ethers": "^2.0.2",
+    "@nomiclabs/hardhat-ethers": "^2.0.3",
+    "@nomiclabs/hardhat-etherscan": "^2.1.8",
+    "@nomiclabs/hardhat-truffle4": "^2.0.3",
     "@nomiclabs/hardhat-waffle": "^2.0.1",
+    "@nomiclabs/hardhat-web3-legacy": "^2.0.0",
+    "@openzeppelin/test-helpers": "^0.5.15",
     "chai": "^4.3.4",
     "ethereum-waffle": "^3.4.0",
-    "ethers": "^5.5.1"
+    "ethers": "^5.5.2",
+    "hardhat": "^2.8.0",
+    "prettier": "^2.5.1",
+    "prettier-plugin-solidity": "^1.0.0-beta.19",
+    "ts-node": "^10.4.0",
+    "web3": "^0.20.7"
+  },
+  "dependencies": {
+    "@openzeppelin/contracts": "^4.4.1",
+    "@uniswap/v2-core": "^1.0.1",
+    "@uniswap/v2-periphery": "^1.1.0-beta.0",
+    "dotenv": "^10.0.0"
+  },
+  "prettier": {
+    "overrides": [
+      {
+        "files": "*.sol",
+        "options": {
+          "printWidth": 80,
+          "tabWidth": 4,
+          "useTabs": false,
+          "singleQuote": false,
+          "bracketSpacing": false,
+          "explicitTypes": "always"
+        }
+      }
+    ]
   }
 }
