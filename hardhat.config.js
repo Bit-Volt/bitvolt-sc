@@ -21,6 +21,7 @@ task("accounts", "Prints the list of accounts", async (taskArgs, hre) => {
  */
 module.exports = {
   solidity: "0.8.4",
+  defaultNetwork: "hardhat",
   networks: {
     hardhat: {},
     testnet: {
@@ -31,6 +32,12 @@ module.exports = {
     },
     kovan: {
       url: `https://eth-kovan.alchemyapi.io/v2/${process.env.API_KEY_ALCHEMY_KOVAN}`,
+      accounts: [process.env.AC_PRIV_KEY],
+    },
+    mainnet: {
+      url: "https://bsc-dataseed.binance.org/",
+      chainId: 56,
+      gasPrice: "auto",
       accounts: [process.env.AC_PRIV_KEY],
     },
   },
