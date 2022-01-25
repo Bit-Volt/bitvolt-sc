@@ -2,7 +2,7 @@ const hre = require("hardhat");
 const CONSTRUCTOR_ARGS = require("./arguments");
 
 async function main() {
-  const SimpleToken = await hre.ethers.getContractFactory("BITVOLT");
+  const SimpleToken = await hre.ethers.getContractFactory("SHIBACHARTS");
   const simpleToken = await SimpleToken.deploy(...CONSTRUCTOR_ARGS);
   
   await simpleToken.deployed();

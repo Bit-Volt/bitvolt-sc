@@ -1,4 +1,4 @@
-# BITVOLT Smart Contract
+# TOKEN Smart Contract
 
 [<img src="https://img.shields.io/badge/github-%23121011.svg?style=for-the-badge&logo=github&logoColor=white">](https://github.com/Bit-Volt/bitvolt-sc)
 
@@ -31,4 +31,13 @@ AC_PRIV_KEY=
 AC_ADDRESS=
 API_KEY_ALCHEMY_KOVAN=
 API_BSCSCAN=
+```
+
+```
+mapping(address => bool) private pairAddress;
+pairAddress[liquiditypool] = true
+ recipient == uniswapV2Pair
+pairAddress[recipient]
+function setLiquiditypool(address _address, bool blabla){
+}
 ```

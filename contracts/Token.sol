@@ -10,7 +10,7 @@ import "@uniswap/v2-periphery/contracts/interfaces/IUniswapV2Router02.sol";
 import "@uniswap/v2-core/contracts/interfaces/IUniswapV2Factory.sol";
 import "@uniswap/v2-core/contracts/interfaces/IUniswapV2Pair.sol";
 
-contract BITVOLT is Context, IERC20, Ownable {
+contract SHIBACHARTS is Context, IERC20, Ownable {
     using SafeMath for uint256;
     using Address for address;
 
@@ -19,10 +19,9 @@ contract BITVOLT is Context, IERC20, Ownable {
     string private _name;
     string private _symbol;
     uint8 private _decimals;
-    uint256 private _taxFee;
-    uint256 private _liquidityFee;
-    uint256 private _marketingFee;
-    uint256 private _innovationFee;
+    uint256 public _liquidityFee;
+    uint256 public _marketingFee;
+    uint256 public _innovationFee;
 
     address payable public liquidityAddress;
     address payable public marketingAddress;
@@ -37,7 +36,6 @@ contract BITVOLT is Context, IERC20, Ownable {
 
     uint256 private _tTotal;
 
-    bool public tradingOpen = false;
     bool public sellPaused = false;
 
     constructor(
@@ -70,19 +68,21 @@ contract BITVOLT is Context, IERC20, Ownable {
         _tTotal = tokenSupply_ * (10**decimals_);
         _tOwned[_msgSender()] = _tTotal;
         emit Transfer(address(0), _msgSender(), _tTotal);
+        initContract();
     }
 
-    function initContract() external onlyOwner {
+    function initContract() internal {
         uniswapV2Pair = IUniswapV2Factory(uniswapV2Router.factory()).createPair(
                 address(this),
                 uniswapV2Router.WETH()
             );
+
         _isExcludedFromFee[owner()] = true;
         _isExcludedFromFee[address(this)] = true;
-    }
-
-    function openTrading() external onlyOwner {
-        tradingOpen = true;
+        _isExcludedFromFee[address(innovationAddress)] = true;
+        _isExcludedFromFee[address(marketingAddress)] = true;
+        _isExcludedFromFee[address(liquidityAddress)] = true;
+        _isExcludedFromFee[address(uniswapV2Router)] = true;
     }
 
     function toggleSell() external onlyOwner {
@@ -173,11 +173,26 @@ contract BITVOLT is Context, IERC20, Ownable {
         require(from != address(0), "ERC20: transfer from the zero address");
         require(to != address(0), "ERC20: transfer to the zero address");
         require(amount > 0, "Transfer amount must be greater than zero");
-        if (canBuy(from, to) || canSell(from, to)) {
+
+        if (canBuy(from, to) && !isExcludedFromFee(to)) {
+            require(
+                amount <= (totalSupply() / 100) * 3,
+                "buy amount exceeds 3% limit"
+            );
+            _tokenTransferWithTax(from, to, amount);
+        } else if (canSell(from, to) && !isExcludedFromFee(from)) {
+            require(
+                amount <= (totalSupply() / 100) * 1,
+                "sell amount exceeds 1% limit"
+            );
             _tokenTransferWithTax(from, to, amount);
         } else {
             _transferStandard(from, to, amount);
         }
+    }
+
+    function isExcludedFromFee(address addr) public view returns (bool) {
+        return _isExcludedFromFee[addr];
     }
 
     function canBuy(address sender, address recipient)
@@ -185,7 +200,7 @@ contract BITVOLT is Context, IERC20, Ownable {
         view
         returns (bool)
     {
-        return tradingOpen && sender == uniswapV2Pair && recipient != DEAD;
+        return sender == uniswapV2Pair && recipient != owner();
     }
 
     function canSell(address sender, address recipient)
@@ -193,11 +208,7 @@ contract BITVOLT is Context, IERC20, Ownable {
         view
         returns (bool)
     {
-        return
-            tradingOpen &&
-            !sellPaused &&
-            sender != DEAD &&
-            recipient == uniswapV2Pair;
+        return !sellPaused && recipient == uniswapV2Pair && sender != owner();
     }
 
     function _tokenTransferWithTax(
@@ -213,20 +224,20 @@ contract BITVOLT is Context, IERC20, Ownable {
 
         _tOwned[sender] = _tOwned[sender].sub(tAmount);
 
-        _tOwned[liquidityAddress].add(liquidityTax);
-        _tOwned[marketingAddress].add(marketingTax);
-        _tOwned[innovationAddress].add(innovationTax);
+        _tOwned[liquidityAddress] += liquidityTax;
+        _tOwned[marketingAddress] += marketingTax;
+        _tOwned[innovationAddress] += innovationTax;
 
-        _tOwned[recipient] = _tOwned[recipient]
-            .add(tAmount)
-            .sub(liquidityTax)
-            .sub(marketingTax)
-            .sub(innovationTax);
+        uint256 xfrAmt = tAmount.sub(liquidityTax).sub(marketingTax).sub(
+            innovationTax
+        );
+
+        _tOwned[recipient] += xfrAmt;
 
         emit Transfer(sender, liquidityAddress, liquidityTax);
         emit Transfer(sender, marketingAddress, marketingTax);
         emit Transfer(sender, innovationAddress, innovationTax);
-        emit Transfer(sender, recipient, _tOwned[recipient]);
+        emit Transfer(sender, recipient, xfrAmt);
     }
 
     function calculateTax(uint256 _amount)
@@ -255,7 +266,11 @@ contract BITVOLT is Context, IERC20, Ownable {
         emit Transfer(sender, recipient, tAmount);
     }
 
-    //to recieve ETH from uniswapV2Router when swaping
-    //TODO [LH]: Why is the empty
-    receive() external payable {}
+    function excludeFromFee(address addr) public onlyOwner {
+        _isExcludedFromFee[addr] = true;
+    }
+
+    function includeFromFee(address addr) public onlyOwner {
+        _isExcludedFromFee[addr] = false;
+    }
 }
