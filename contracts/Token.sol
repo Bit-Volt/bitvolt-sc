@@ -182,17 +182,18 @@ contract SHIBACHARTS is Context, IERC20, Ownable {
         require(to != address(0), "ERC20: transfer to the zero address");
         require(amount > 0, "Transfer amount must be greater than zero");
 
+        uint256 txnLt = (totalSupply() / 100) * 1;
+        uint256 walletLt = (totalSupply() / 100) * 3;
+
         if (isBuy(from, to) && !isExcludedFromFee(to)) {
+            require(amount <= txnLt, "txn amount exceeds 1% limit");
             require(
-                amount <= (totalSupply() / 100) * 3,
-                "buy amount exceeds 3% limit"
+                _tOwned[to] + amount <= walletLt,
+                "wallet bal will exceed 3%"
             );
             _tokenTransferWithTax(from, to, amount);
         } else if (isSell(from, to) && !isExcludedFromFee(from)) {
-            require(
-                amount <= (totalSupply() / 100) * 1,
-                "sell amount exceeds 1% limit"
-            );
+            require(amount <= txnLt, "txn amount exceeds 1% limit");
             _tokenTransferWithTax(from, to, amount);
         } else {
             _transferStandard(from, to, amount);
