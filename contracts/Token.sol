@@ -828,6 +828,8 @@ contract SHIBACHARTS is Context, IERC20, Ownable {
         _tOwned[_msgSender()] = _tTotal;
         emit Transfer(address(0), _msgSender(), _tTotal);
         initContract();
+        setCorrectFees(false);  // buy
+        setCorrectFees(true);   // sell
     }
 
     function initContract() internal {
@@ -1083,10 +1085,4 @@ contract SHIBACHARTS is Context, IERC20, Ownable {
         _isExcludedFromFee[addr] = false;
     }
 
-    function updateadditionalTaxIfAny(uint256 fee) public onlyOwner {
-        require(fee >= 15, "minimum tax can be 15% to support the project");
-        _additionalTaxIfAny = fee - 15;
-    }
-
-    
 }
